@@ -97,8 +97,8 @@ func main() {
 		}
 
 		lastSyncTime = "1970-01-01T00:00:00Z"
-		if len(cloudData) > 0 && cloudData.UpdatedAt != "" {
-			t, parseErr := time.Parse(time.RFC3339, cloudData.UpdatedAt)
+		if len(cloudData) > 0 && cloudData[0].UpdatedAt != "" {
+			t, parseErr := time.Parse(time.RFC3339, cloudData[0].UpdatedAt)
 			if parseErr == nil {
 				lastSyncTime = t.UTC().Format(time.RFC3339)
 			}
@@ -127,7 +127,8 @@ func main() {
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf("local swiftpos worker instance execution fault: %d", resp.StatusCode)
+    		bodyBytes, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+    		return fmt.Errorf("local swiftpos worker instance fault (HTTP %d): %s", resp.StatusCode, string(bodyBytes))
 		}
 
 		return json.NewDecoder(resp.Body).Decode(&posProducts)
