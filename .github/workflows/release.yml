@@ -1,0 +1,38 @@
+name: Build and Release Executable
+
+on:
+  push:
+    tags:
+      - "v*" # Triggers whenever you push a tag like v1.0.0
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "stable"
+          cache: true # Speeds up subsequent workflow runs
+
+      # Leverages your Makefile targets to compile both platforms
+      - name: Compile Production Binaries
+        run: |
+          make all
+
+      # Only creates the GitHub Release if running on GitHub infrastructure
+      - name: Create GitHub Release and Upload Binaries
+        if: github.server_url == 'https://github.com'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/swiftpos_sync_linux_amd64
+            build/swiftpos_sync.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
